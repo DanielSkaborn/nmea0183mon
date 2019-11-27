@@ -9,7 +9,7 @@
 #define	MAXTAGS	10
 #define MAXIDTS 100
 
-char	NMEAsentence[255] = {"$PJMJP,0,BCS,0,KRX,0,TVA,0,TRE,3,NLN*32\0"};
+char	NMEAsentence[255];// = {"$PJMJP,0,BCS,0,KRX,0,TVA,0,TRE,3,NLN*32\0"};
 
 char	tags[MAXTAGS][10];	// tag strings
 int		ntags;			// number of tags found
@@ -160,25 +160,13 @@ void parseSentence(void) {
 			currentTag = i;
 		i++;
 	}
-//	printf(tempTag);printf("\n");
-//	printf(tags[0]);
-//	printf("\nTagMatch %d %d\n", currentTag, match);
 
 	if (currentTag != -1) {
 		ended = 0;
-//		printf("capture idts\n");
 		while(ended==0) {
-//			printf("n:%d\n",n);
 			n=captureData(n);
-//			printf("n:%d - ",n);
-//			printf(currentData);
-//			printf("\n");
-			
 			if (ended == 0) {
 				n=captureIdts(n);
-//				printf("n:%d - ",n);
-//				printf(currentIdts);
-//				printf("\n");
 			}
 			currentIdt = -1;
 	
@@ -190,7 +178,6 @@ void parseSentence(void) {
 				for (j=0;j<10;j++) {
 					if (idts[currentTag][i][j] == currentIdts[j]){
 						match++;
-//						printf("%d \n",match);
 					}
 				}
 				if (match == 10)
@@ -199,9 +186,7 @@ void parseSentence(void) {
 			}
 		
 			// register tag if new
-//			printf("match: %d\n",match);
 			if ((match != 10)) {
-//				printf("register idt: %d %s\n",nidts[currentTag],currentIdts);
 				if (nidts[currentTag] < MAXIDTS) {
 					nidts[currentTag]++;
 					for (i=0;i<10;i++) {
@@ -351,29 +336,4 @@ int main(void) {
 	while(1)
 		if (dataRead())
 			parseSentence();
-
-	
-/*	printSentence();
-	printf("\n");
-	parseSentence();
-	makeFakeNmea();
-	parseSentence();
-	makeFakeNmea();
-	parseSentence();
-	makeFakeNmea();
-	parseSentence();
-	makeFakeNmea();
-	parseSentence();
-	makeFakeNmea();
-	parseSentence();
-	printf("\033c");
-	printRegistry();
-	sleep(1);
-	printf("\033c");
-	while(1) {
-		makeFakeNmea();
-		parseSentence();
-		usleep(100000);
-	}*/
-		
 }
