@@ -1,0 +1,2 @@
+NMEA0183 MJP JM3 VDR monitor
+
