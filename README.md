@@ -13,3 +13,11 @@ Verified on HW
 --------------
 Tested on a RPi 3
 
+Usage
+-----
+./nmon				: Defaults reading from /dev/ttyUSB0
+./nmon /dev/ttyUSB1		: Reading from /dev/ttyUSB1
+./nmon /dev/ttyUSB0 log		: Readling from /dev/ttyUSB0 and output nmea records data log to file
+
+When log is given, the input device has to be given.
+
