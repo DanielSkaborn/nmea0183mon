@@ -58,6 +58,7 @@ void printTagIdt(void) {
 	col = (currentIdt-1) / 25;
 	row = (currentIdt-1) - (col*25);
 
+	row += currentTag*27;
 	col *= 28;
 
 	printf("%c[%d;%df",0x1b, row+3, col+3);
@@ -70,7 +71,7 @@ void printTagIdt(void) {
 
 void printSentence(void) {
 	int row, col;
-	row = 50;
+	row = 55;
 	col = 5;
 	printf("%c[%d;%df",0x1b, row+2, col+3);
 	printf("                                                                                                   \n",NMEAsentence);
@@ -125,7 +126,18 @@ void init(void) {
 	tags[0][7]='\0';
 	tags[0][8]='\0';
 	tags[0][9]='\0';
-	ntags = 1;
+	
+	tags[1][0]='$';
+	tags[1][1]='P';
+	tags[1][2]='B';
+	tags[1][3]='M';
+	tags[1][4]='J';
+	tags[1][5]='P';
+	tags[1][6]='\0';
+	tags[1][7]='\0';
+	tags[1][8]='\0';
+	tags[1][9]='\0';
+	ntags = 2;
 	
 	for (int i=0;i<MAXTAGS;i++)
 		for (int j=0;j<100;j++)
@@ -204,7 +216,7 @@ void parseSentence(void) {
 			if (currentIdt !=-1)
 				printTagIdt();
 		}
-		printSentence();
+//		printSentence();
 	}
 }
 
@@ -312,15 +324,17 @@ int dataRead(void) {
 	int n,i,j;
 	
 	n = read (fd, buf, sizeof buf);  // read up to 100 characters if ready to read
-	
 	if (n!=0) {
 		for (i=0;i<n;i++) {
 			if (buf[i]=='$') {
 				for (j=0;j<255;j++) {
 					NMEAsentence[j] = tempNMEAsentence[j];
-					newSentence = 1;
-					npos = 0;
+					if (NMEAsentence[j] == '\n')
+						NMEAsentence[j] = '\0';
 				}
+				printSentence();
+				newSentence = 1;
+				npos = 0;
 			}
 			tempNMEAsentence[npos] = buf[i];
 			tempNMEAsentence[npos+1] ='\0';
@@ -336,7 +350,7 @@ int dataRead(void) {
 
 int main(void) {
 	printf("\033c");
-	printf("  *** NMEA0183 - PJMJP monitor *** \n");
+	printf("    *** NMEA0183 - $PJMJP $PBMJP monitor *** \n");
 	init();
 	
 	openSerialPort();
