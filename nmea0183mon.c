@@ -25,7 +25,7 @@ char	currentIdts[10];
 int		ended;
 
 
-char	portname[128] = "/dev/ttyUSB0";
+char	portname[128];// = "/dev/ttyUSB0";
 int		fd;
 
 int captureData(int startn) {
@@ -280,47 +280,8 @@ void parseSentence(void) {
 			if (currentIdt !=-1)
 				printTagIdt();
 		}
-//		printSentence();
 	}
 }
-
-/*
-float a,b,c,d,e;
-int chunk= 0;
-void makeFakeNmea(void) {
-	a += 0.1;
-	b -= 0.3;
-	c = (c+0.1)*1.1;
-	d += 1;
-	e -= 1;
-	if ((a<-100)||(a>100)) a=0;
-	if ((b<-100)||(b>100)) b=0;
-	if ((c<-100)||(c>100)) c=0;
-	if ((d<-100)||(d>100)) d=0;
-	if ((e<-100)||(e>100)) e=0;
-	chunk++;
-	if (chunk == 5)
-		chunk = 0;
-		
-	switch (chunk) {
-		case 0:
-			sprintf(NMEAsentence,"$PJMJP,%.1f,BCS,%.1f,KRX,%.1f,TVA,%.1f,TRE,%.1f,NLN*32\0",a,b,c,d,e);
-			break;
-		case 1:
-			sprintf(NMEAsentence,"$PJMJP,%.1f,RRR,%.1f,LRX,%.1f,AVA,%.1f,KRE,%.1f,PLN*32\0",a,b,c,d,e);
-			break;
-		case 2:
-			sprintf(NMEAsentence,"$PJMJP,%.1f,BYY,%.1f,QGX,%.1f,TVD,%.1f,TPD,%.1f,NOL*32\0",a,b,c,d,e);
-			break;
-		case 3:
-			sprintf(NMEAsentence,"$PJMJP,%.1f,BOO,%.1f,GGX,%.1f,TVQ,%.1f,TWE,%.1f,GYR*32\0",a,b,c,d,e);
-			break;
-		case 4:
-			sprintf(NMEAsentence,"$PJMJP,%.1f,BAA,%.1f,KQX,%.1f,TQA,%.1f,TWW,%.1f,NFE,99,LRK,%.2f,KDF*32\0",a,b,c,d,e,e);
-			break;
-	}
-}
-*/
 
 void set_blocking(int should_block) {
 	struct termios tty;
@@ -370,16 +331,29 @@ int set_interface_attribs (int fd, int speed, int parity) {
 	return 0;
 }
 void openSerialPort(void) {
+	int row = 55;
+	int col = 5;
+	printf("%c[%d;%df",0x1b, row+2, col+3);
+	printf("                                                                                                      \n");
+	printf("Opening Serial port: %s\n", portname);
 	fd = open (portname, O_RDWR | O_NOCTTY | O_SYNC);
-	if (fd < 0)
+	if (fd < 0) {
+		row = 55;
+		col = 5;
+		printf("%c[%d;%df",0x1b, row+2, col+3);
+		printf("                                                                                                      \n");
+		printf("FAILED TO OPEN SERIAL PORT!\n");
+		sleep(1);
 		return;
+	}
 
 	set_interface_attribs (fd, B4800, 0);  // set speed to 4800baud, 8n1 (no parity)
 	set_blocking (0);                // set no blocking
 }
 
-/*static*/ int npos = 0;
+
 int dataRead(void) {
+	static int npos = 0;
 	int newSentence = 0;
 	
 	static char tempNMEAsentence[255];
@@ -411,11 +385,19 @@ int dataRead(void) {
 }	
 
 
-
-int main(void) {
+int main (int argc, char *argv[]) {
+	
+	int n = 0;
+	if (argc==2) {
+		sprintf(portname, "%s", argv[1]);
+		if (portname[0] == 'h')
+			printf("    *** NMEA0183 - $PJMJP $PBMJP monitor *** \n\n - nmon serial_device\n\n No serial_device defaults to /dev/ttyUSB0\n\n example usage: nmon /dev/ttyUSB2   - will try to open ttyUSB2\n\n");
+	} else
+		sprintf(portname, "/dev/ttyUSB0");	// default to /dev/ttyUSB0
+	
 	int csresult;
 	printf("\033c");
-	printf("    *** NMEA0183 - $PJMJP $PBMJP monitor *** \n");
+	printf("    *** NMEA0183 - $PJMJP $PBMJP monitor [ %s ] *** \n", portname);
 	init();
 	
 	openSerialPort();
