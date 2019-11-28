@@ -58,10 +58,12 @@ void printTagIdt(void) {
 	col = (currentIdt-1) / 25;
 	row = (currentIdt-1) - (col*25);
 
-	col *= 20;
+	col *= 28;
 
 	printf("%c[%d;%df",0x1b, row+3, col+3);
-	printf(" %s %s    \n",currentIdts,currentData);
+	printf("                           \n",currentIdts,currentData);
+	printf("%c[%d;%df",0x1b, row+3, col+3);
+	printf(" %s %s\n",currentIdts,currentData);
 	printf("\n");
 	return;
 }
@@ -71,7 +73,10 @@ void printSentence(void) {
 	row = 50;
 	col = 5;
 	printf("%c[%d;%df",0x1b, row+2, col+3);
-	printf("%s                  \n",NMEAsentence);
+	printf("                                                                                                   \n",NMEAsentence);
+
+	printf("%c[%d;%df",0x1b, row+2, col+3);
+	printf("%s\n",NMEAsentence);
 	return;
 }
 
@@ -249,7 +254,7 @@ void set_blocking(int should_block) {
 	}
 
 	tty.c_cc[VMIN]  = should_block ? 1 : 0;
-	tty.c_cc[VTIME] = 5;	// 0.5 seconds read timeout
+	tty.c_cc[VTIME] = 1;	// 0.5 seconds read timeout
 }
 
 
@@ -297,11 +302,12 @@ void openSerialPort(void) {
 	set_blocking (0);                // set no blocking
 }
 
+/*static*/ int npos = 0;
 int dataRead(void) {
 	int newSentence = 0;
-	static int npos = 255;
+	
 	static char tempNMEAsentence[255];
-	char buf[100];
+	char buf[10];
 	
 	int n,i,j;
 	
@@ -317,6 +323,8 @@ int dataRead(void) {
 				}
 			}
 			tempNMEAsentence[npos] = buf[i];
+			tempNMEAsentence[npos+1] ='\0';
+			tempNMEAsentence[npos+2] ='\0';
 			npos++;
 		}				
 	}
