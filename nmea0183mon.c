@@ -24,9 +24,11 @@ char	currentData[30];
 char	currentIdts[10];
 int		ended;
 
+int		makeLog = 0;
 
 char	portname[128];// = "/dev/ttyUSB0";
 int		fd;
+FILE *	fp;
 
 int captureData(int startn) {
 	int i;
@@ -51,9 +53,6 @@ int captureData(int startn) {
 
 void printTagIdt(void) {
 	int row, col;
-	
-/*	row = currentIdt / 25;
-	col = ((currentIdt - (row*25)) * 25) - 20;*/
 
 	col = (currentIdt-1) / 25;
 	row = (currentIdt-1) - (col*25);
@@ -70,14 +69,26 @@ void printTagIdt(void) {
 }
 
 void printSentence(void) {
+	static int closeOpenCnt = 10;
 	int row, col;
 	row = 55;
 	col = 5;
 	printf("%c[%d;%df",0x1b, row+2, col+3);
-	printf("                                                                                                      \n");
+	printf("                                                                                                            \n");
 
 	printf("%c[%d;%df",0x1b, row+2, col+3);
 	printf("%s\n",NMEAsentence);
+	
+	if (makeLog) {
+		fprintf(fp, "%s\n", NMEAsentence);
+		closeOpenCnt--;
+		if (closeOpenCnt==0) {
+			closeOpenCnt = 10;
+			fclose(fp);
+			fp = fopen("./VDRdata.nmea","a");
+		}
+	}
+
 	return;
 }
 
@@ -207,6 +218,12 @@ void init(void) {
 		for (int j=0;j<100;j++)
 			for (int k=0;k<10;k++)
 				idts[i][j][k]= '\0';
+	
+	if (makeLog) {
+		fp = fopen("./VDRdata.nmea","a");
+		fprintf(fp, "*** Start recorder ***\n");
+	}
+
 	return;
 }
 
@@ -333,9 +350,7 @@ int set_interface_attribs (int fd, int speed, int parity) {
 void openSerialPort(void) {
 	int row = 55;
 	int col = 5;
-	printf("%c[%d;%df",0x1b, row+2, col+3);
-	printf("                                                                                                      \n");
-	printf("Opening Serial port: %s\n", portname);
+
 	fd = open (portname, O_RDWR | O_NOCTTY | O_SYNC);
 	if (fd < 0) {
 		row = 55;
@@ -386,20 +401,26 @@ int dataRead(void) {
 
 
 int main (int argc, char *argv[]) {
-	
 	int n = 0;
-	if (argc==2) {
+	if (argc>=2) {
 		sprintf(portname, "%s", argv[1]);
 		if (portname[0] == 'h')
 			printf("    *** NMEA0183 - $PJMJP $PBMJP monitor *** \n\n - nmon serial_device\n\n No serial_device defaults to /dev/ttyUSB0\n\n example usage: nmon /dev/ttyUSB2   - will try to open ttyUSB2\n\n");
 	} else
 		sprintf(portname, "/dev/ttyUSB0");	// default to /dev/ttyUSB0
 	
+	if (argc>=3)
+		if ( (argv[2][0] == 'l') && (argv[2][1] == 'o') && (argv[2][2] == 'g') )
+			makeLog = 1;
+	
 	int csresult;
 	printf("\033c");
-	printf("    *** NMEA0183 - $PJMJP $PBMJP monitor [ %s ] *** \n", portname);
+	if (makeLog) 
+		printf("    *** NMEA0183 - $PJMJP $PBMJP monitor [ %s ] [ WRITE LOG ] *** \n", portname);
+	else
+		printf("    *** NMEA0183 - $PJMJP $PBMJP monitor [ %s ] *** \n", portname);
+
 	init();
-	
 	openSerialPort();
 	
 	while(1)
