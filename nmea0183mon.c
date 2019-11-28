@@ -74,18 +74,82 @@ void printSentence(void) {
 	row = 55;
 	col = 5;
 	printf("%c[%d;%df",0x1b, row+2, col+3);
-	printf("                                                                                                   \n",NMEAsentence);
+	printf("                                                                                                      \n");
 
 	printf("%c[%d;%df",0x1b, row+2, col+3);
 	printf("%s\n",NMEAsentence);
 	return;
 }
 
+void printChecksum(int csresult) {
+	int row, col;
+	row = 56;
+	col = 5;
+	printf("%c[%d;%df",0x1b, row+2, col+3);
+	
+	switch (csresult) {
+		case 0:
+			printf("Checksum ERROR!      \n");
+			break;
+		case 1:
+			printf("Checksum OK!         \n");
+			break;
+		case -1:
+			printf("Invalid Format! [-1] \n");
+			break;
+		case -2:
+			printf("Invalid Format! [-2] \n");
+			break;
+		default:
+			printf("                     \n");
+			break;
+	}
+	return;
+}
+
+
 void printRegistry(void) {
 	for (int i=0;i<25;i++) {
 		printf(" %d %s    %d %s   %d %s   %d %s \n", i, idts[0][i],i+25,idts[0][i+25],i+50, idts[0][i+50],i+75,idts[0][i+75]);
 	}
 }
+
+int checksumtest(void) {
+	char checksum = 0;
+	char rcvChecksum = 0;
+	int npos = 0;
+	
+	while(NMEAsentence[npos]!='*' && NMEAsentence[npos]!='\0' && npos!=255) {
+		checksum ^= NMEAsentence[npos];
+		npos++;
+	}
+	checksum ^= '$';
+
+	if (npos == 255)
+		return -1;	// invalid format, no * found
+	if (NMEAsentence[npos] == '\0')
+		return -2;	// invalid format, no * found
+	
+	if ( NMEAsentence[npos+1]>='0' && NMEAsentence[npos+1]<='9')
+		rcvChecksum = (NMEAsentence[npos+1]-'0') * 0x10;
+	else
+		if ( NMEAsentence[npos+1]>='A' && NMEAsentence[npos+1]<='F')
+			rcvChecksum = ( NMEAsentence[npos+1] - 'A' + 0xA ) * 0x10;
+			
+	if ( NMEAsentence[npos+2]>='0' && NMEAsentence[npos+2]<='9')
+		rcvChecksum += ( NMEAsentence[npos+2] - '0' );
+	else
+		if ( NMEAsentence[npos+2]>='A' && NMEAsentence[npos+1]<='F')
+			rcvChecksum += ( NMEAsentence[npos+2] - 'A' + 0xA );
+	
+//	printf("                                          %c%c %X %X  \n",NMEAsentence[npos+1], NMEAsentence[npos+2],rcvChecksum, checksum);
+	
+	if (rcvChecksum == checksum)
+		return 1;	// checksum ok
+	else
+		return 0;	// checksum error
+}
+
 int captureIdts(int startn) {
 	int i;
 	int n = startn;
@@ -349,6 +413,7 @@ int dataRead(void) {
 
 
 int main(void) {
+	int csresult;
 	printf("\033c");
 	printf("    *** NMEA0183 - $PJMJP $PBMJP monitor *** \n");
 	init();
@@ -356,6 +421,10 @@ int main(void) {
 	openSerialPort();
 	
 	while(1)
-		if (dataRead())
-			parseSentence();
+		if (dataRead()) {
+			csresult=checksumtest();
+			if (csresult == 1)
+				parseSentence();
+			printChecksum(csresult);
+		}
 }
