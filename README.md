@@ -4,6 +4,7 @@ NMEA0183 MJP JM3 VDR monitor
 VDR dara monitoring
 -------------------
 A simple monitor for MJP VDR data monitoring.
+Disclaimer: Not to be used as an official VDR. Only to be used in testing environments.
 
 Compile
 -------
@@ -22,4 +23,5 @@ Usage
 | ./nmon /dev/ttyUSB0 log	| Readling from /dev/ttyUSB0 and output nmea records data log to file. |
 <br />
 When log is given, the input device has to be given.<br />
+
 
