@@ -61,7 +61,7 @@ void printTagIdt(void) {
 	col *= 28;
 
 	printf("%c[%d;%df",0x1b, row+3, col+3);
-	printf("                           \n",currentIdts,currentData);
+	printf("                             \n",currentIdts,currentData);
 	printf("%c[%d;%df",0x1b, row+3, col+3);
 	printf(" %s %s\n",currentIdts,currentData);
 	printf("\n");
